@@ -22,13 +22,13 @@ def get_student_by_github(github):
     """Given a github account name, print information about the matching student."""
 
     QUERY = """
-        SELECT first_name, last_name, github
+        SELECT first_name, last_name
         FROM Students
         WHERE github = :github
         """
     db_cursor = db.session.execute(QUERY, {'github': github})
     row = db_cursor.fetchone() #this result in a tuple like object then we format it below
-    print "Student: %s %s\nGithub account: %s" % (row[0], row[1], row[2])
+    print "Student: %s %s\nGithub account: %s" % (row[0], row[1], github)
 
 
 def make_new_student(first_name, last_name, github):
@@ -56,31 +56,31 @@ def get_project_by_title(title):
     
     db_cursor = db.session.execute(QUERY, {'title' : title})
     row = db_cursor.fetchone()
-
-    print "%s: %s" % (row[1], row[2])
+    print "%s: %s" % (title, row[0])
     
 
 
 def get_grade_by_github_title(github, title):
-    """Print grade student received for a project."""
+    """Print grade student received for project."""
     QUERY = """
     SELECT grade
     FROM Grades
-    WHERE github = :github AND title = :title
+    WHERE student_github = :github AND project_title = :title
     """
 
     db_cursor = db.session.execute(QUERY, {'github': github, 'title': title})
     row = db_cursor.fetchone() #make sure to fetch rw 
-    print "Username %s, project %s: %s" % (row[0], row[1], row[2])
+
+    print "Username %s, project %s: %s" % (github, title, row[0])
 
 
 def assign_grade(github, title, grade):
     """Assign a student a grade on an assignment and print a confirmation."""
     QUERY = """ 
-    INSERT INTO Grades VALUES (student_github, project_title, grade)
+    INSERT INTO Grades VALUES (:student_github, :project_title, :grade)
     """
-    db_cursor = db.session.execute(QUERY, {'student_github':student_github, 'project_title': project_title, 'grade':grade})
-    print "Grade %s added for %s:%s" % (grade, project_title, github)
+    db_cursor = db.session.execute(QUERY, {'student_github': github, 'project_title': title,'grade': grade})
+    print "Grade %s added for %s:%s" % (grade, title, github)
 
 
 def handle_input():
@@ -104,6 +104,21 @@ def handle_input():
         elif command == "new_student":
             first_name, last_name, github = args   # unpack!
             make_new_student(first_name, last_name, github)
+
+        elif command == "get_project":
+            title = args[0]
+            get_project_by_title(title)
+
+        elif command == "get_grade":
+            github = args[0]
+            title = args[1]
+            get_grade_by_github_title(github, title)
+
+        elif command == "assign_grade":
+            github = args[0]
+            title = args[1]
+            grade = args[2]
+            assign_grade(github, title, grade)
 
         else:
             if command != "quit":
